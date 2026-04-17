@@ -16,8 +16,8 @@ class PlaceSourceGoogle(Base):
     __tablename__ = "place_source_google"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    place_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("places.id"), nullable=False, index=True
+    place_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("places.id"), nullable=True, index=True
     )
     google_place_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     raw_json: Mapped[dict] = mapped_column(JSONB, nullable=False)
