@@ -100,10 +100,10 @@
 
 ### Implementation for User Story 4
 
-- [ ] T019 [US4] Implement `scripts/seed.py` — `sys.path` setup for repo root; `import app.models` (registers models); `Base.metadata.create_all(bind=engine)`; define `SAMPLE_GOOGLE_PAYLOAD` dict with full Shibuya Crossing data (`id`, `displayName.text`, `primaryType`, `types`, `formattedAddress`, `location.latitude/longitude`, `rating`, `userRatingCount`, `businessStatus`, `googleMapsUri`); create `SessionLocal()`; call `ingest_google_place(db, SAMPLE_GOOGLE_PAYLOAD)`; print `"[seed] Inserted place: {display_name} (id={place_id})"` if action is `"created"`, or `"[seed] Place already exists: {display_name} — skipping."` if `"updated"`; always print confirmation that raw source row was appended; print `"[seed] Done."`; close session
-- [ ] T020 [US4] Verify seed idempotency and round-trip in `scripts/seed.py` — run `python scripts/seed.py` once (should print "Inserted"); run again (should print "already exists"); confirm `places` table has exactly 1 row for `ChIJN1t_tDeuEmsRUsoyG83frY4`; confirm `place_source_google` has 2 rows (one per run — append-only); confirm `GET /api/v1/places/1` returns the seeded record
+- [ ] T019 [US4] Implement `scripts/seed.py` — `sys.path` setup for repo root; `import app.models` (registers models); `Base.metadata.create_all(bind=engine)`; define `SAMPLE_GOOGLE_PAYLOAD` dict with 華山1914文化創意產業園區 data (`id` e.g. `"ChIJHuashan1914TaipeiXXXXXX"`, `displayName.text`: `"華山1914文化創意產業園區"`, `primaryType`: `"tourist_attraction"`, `types`: `["tourist_attraction", "point_of_interest"]`, `formattedAddress`: `"10491台灣台北市中正區八德路一段1號"`, `location.latitude`: `25.0441`, `location.longitude`: `121.5292`, `rating`: `4.4`, `userRatingCount`: 12000, `businessStatus`: `"OPERATIONAL"`, `googleMapsUri`: `"https://maps.google.com/?cid=..."`); create `SessionLocal()`; call `ingest_google_place(db, SAMPLE_GOOGLE_PAYLOAD)`; print `"[seed] Inserted place: {display_name} (id={place_id})"` if action is `"created"`, or `"[seed] Place already exists: {display_name} — skipping."` if `"updated"`; always print confirmation that raw source row was appended; print `"[seed] Done."`; close session
+- [ ] T020 [US4] **Verification**: Manually validate seed idempotency and round-trip — (1) run `python scripts/seed.py` once; confirm output contains "Inserted place: 華山1914文化創意產業園區"; (2) run `python scripts/seed.py` again; confirm output contains "already exists"; (3) run `psql chitogo -c "SELECT count(*) FROM places WHERE google_place_id = 'ChIJHuashan1914TaipeiXXXXXX';"` and confirm count is 1; (4) run `psql chitogo -c "SELECT count(*) FROM place_source_google WHERE google_place_id = 'ChIJHuashan1914TaipeiXXXXXX';"` and confirm count is 2 (append-only); (5) run `curl http://localhost:8000/api/v1/places/1` and confirm the response contains `"display_name": "華山1914文化創意產業園區"`. No new code needed — this is a manual validation checklist.
 
-**Checkpoint**: Both verification confirmations pass. Place detail endpoint shows the seeded Shibuya Crossing record with all mapped fields.
+**Checkpoint**: Both verification confirmations pass. Place detail endpoint shows the seeded 華山1914文化創意產業園區 record with all mapped fields.
 
 ---
 
@@ -111,7 +111,7 @@
 
 **Purpose**: End-to-end verification and cleanup before handoff.
 
-- [ ] T021 Run full verification checklist from `specs/001-place-data-service/quickstart.md` — execute all 7 verification steps: DB health check, seed success, list endpoint returns record, detail endpoint returns full record, import endpoint returns `"created"`, re-import returns `"updated"`, district filter returns only Shibuya records
+- [ ] T021 Run full verification checklist from `specs/001-place-data-service/quickstart.md` — execute all 7 verification steps: DB health check, seed success, list endpoint returns record, detail endpoint returns full record, import endpoint returns `"created"`, re-import returns `"updated"`, district filter (`?district=中正區`) returns only 華山1914 records
 - [ ] T022 [P] Review `CLAUDE.md` and confirm all listed commands match the actual implementation; update any discrepancies in run commands, file paths, or database config
 
 ---
