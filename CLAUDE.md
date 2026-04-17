@@ -38,6 +38,9 @@ python scripts/seed.py
 
 # Health check
 curl http://localhost:8000/api/v1/health/db
+
+# District filter verification
+curl "http://localhost:8000/api/v1/places?district=中正區"
 ```
 
 ## Code Style
@@ -59,6 +62,7 @@ curl http://localhost:8000/api/v1/health/db
 ## Recent Changes
 
 - 001-place-data-service: Initial plan — place data service with ingestion, normalization, storage, retrieval
+- 001-place-data-service: Seed/verification flow aligned to Taipei sample place `華山1914文化創意產業園區`
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

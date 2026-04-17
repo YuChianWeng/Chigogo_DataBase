@@ -25,4 +25,6 @@ class PlaceSourceGoogle(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    place: Mapped["Place"] = relationship("Place", back_populates="source_records")
+    place: Mapped["Place | None"] = relationship(
+        "Place", back_populates="source_records"
+    )
