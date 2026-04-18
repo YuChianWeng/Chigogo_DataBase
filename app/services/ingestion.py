@@ -7,6 +7,45 @@ from app.models.place import Place
 from app.models.place_features import PlaceFeatures
 from app.models.place_source_google import PlaceSourceGoogle
 
+TAIPEI_DISTRICT_TYPE_PRIORITY = [
+    "administrative_area_level_2",
+    "sublocality",
+    "sublocality_level_1",
+    "administrative_area_level_3",
+    "locality",
+]
+
+TAIPEI_ALLOWED_DISTRICTS = {
+    "中正區",
+    "大同區",
+    "中山區",
+    "松山區",
+    "大安區",
+    "萬華區",
+    "信義區",
+    "士林區",
+    "北投區",
+    "內湖區",
+    "南港區",
+    "文山區",
+}
+
+TAIPEI_DISTRICT_NAME_MAP = {
+    "zhongzheng district": "中正區",
+    "datong district": "大同區",
+    "zhongshan district": "中山區",
+    "songshan district": "松山區",
+    "daan district": "大安區",
+    "wanhua district": "萬華區",
+    "xinyi district": "信義區",
+    "shilin district": "士林區",
+    "beitou district": "北投區",
+    "neihu district": "內湖區",
+    "nangang district": "南港區",
+    "nankang district": "南港區",
+    "wenshan district": "文山區",
+}
+
 
 def _safe_get(d: dict, *keys, default=None):
     current = d
@@ -23,11 +62,35 @@ def _normalize_name(name: str) -> str:
     return unicodedata.normalize("NFKC", name).lower().strip()
 
 
+def _canonicalize_district_key(name: str) -> str:
+    normalized = unicodedata.normalize("NFKC", name).strip().casefold()
+    normalized = normalized.replace("’", "").replace("'", "")
+    return " ".join(normalized.split())
+
+
+def normalize_district_name(name: str) -> str:
+    normalized = unicodedata.normalize("NFKC", name).strip()
+    if not normalized:
+        return normalized
+
+    if normalized in TAIPEI_ALLOWED_DISTRICTS:
+        return normalized
+
+    mapped = TAIPEI_DISTRICT_NAME_MAP.get(_canonicalize_district_key(normalized))
+    if mapped:
+        return mapped
+    return normalized
+
+
 def _extract_district(payload: dict) -> str | None:
-    for component in payload.get("addressComponents", []):
-        types = component.get("types", [])
-        if "sublocality" in types or "locality" in types:
-            return component.get("longText")
+    components = payload.get("addressComponents", [])
+    for district_type in TAIPEI_DISTRICT_TYPE_PRIORITY:
+        for component in components:
+            types = component.get("types", [])
+            if district_type in types:
+                district_name = component.get("longText")
+                if isinstance(district_name, str) and district_name.strip():
+                    return normalize_district_name(district_name)
     return None
 
 
@@ -54,6 +117,18 @@ def ingest_google_place(
             "action": "raw_only",
         }
 
+    district = _extract_district(payload)
+    if district not in TAIPEI_ALLOWED_DISTRICTS:
+        # Nearby Search can return cross-boundary results, so non-Taipei places are
+        # retained only as raw payloads and never inserted into the normalized table.
+        db.add(raw_record)
+        db.commit()
+        return {
+            "place_id": None,
+            "google_place_id": google_place_id,
+            "action": "filtered_out",
+        }
+
     place_data = {
         "google_place_id": google_place_id,
         "display_name": display_name,
@@ -61,7 +136,7 @@ def ingest_google_place(
         "primary_type": payload.get("primaryType"),
         "types_json": payload.get("types"),
         "formatted_address": payload.get("formattedAddress"),
-        "district": _extract_district(payload),
+        "district": district,
         "latitude": _safe_get(payload, "location", "latitude"),
         "longitude": _safe_get(payload, "location", "longitude"),
         "rating": payload.get("rating"),

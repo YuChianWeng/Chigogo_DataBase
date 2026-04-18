@@ -43,6 +43,10 @@ Currently implemented:
 - `POST /api/v1/places/import/google`
 - `scripts/import_place.py`
 - `scripts/seed.py`
+- `scripts/fetch_google_nearby.py` — Google Nearby Search fetch + import pipeline
+- `config/google_seed_targets.json` — all 12 Taipei district seed points and POI type groups
+- Taipei district name normalization (Chinese and English forms) with cross-boundary filtering
+- Unit test suite under `tests/`
 
 Verified sample seed place:
 
@@ -79,9 +83,15 @@ Verified sample seed place:
 │   │   └── ingestion.py
 │   ├── db.py
 │   └── main.py
+├── config/
+│   └── google_seed_targets.json
 ├── scripts/
+│   ├── fetch_google_nearby.py
 │   ├── import_place.py
 │   └── seed.py
+├── tests/
+│   ├── test_fetch_google_nearby.py
+│   └── test_ingestion.py
 ├── specs/
 ├── .env.example
 ├── requirements.txt
@@ -270,6 +280,59 @@ curl -X POST "http://localhost:8800/api/v1/places/import/google" \
   -d @payload.json
 ```
 
+## Fetch and Import from Google Nearby Search
+
+`scripts/fetch_google_nearby.py` queries the Google Places Nearby Search API for each configured Taipei district and imports results directly into the local data service.
+
+### Prerequisites
+
+- A valid Google Maps API key with Places API (New) enabled
+- The data service running locally on port 8800
+
+### Usage
+
+```bash
+# Run all 12 Taipei districts
+GOOGLE_MAPS_API_KEY=<your_key> python scripts/fetch_google_nearby.py
+
+# Run a single district
+GOOGLE_MAPS_API_KEY=<your_key> python scripts/fetch_google_nearby.py --district 中正區
+
+# Include lower-priority bus station queries
+GOOGLE_MAPS_API_KEY=<your_key> python scripts/fetch_google_nearby.py --include-secondary-transport
+```
+
+### Configuration
+
+`config/google_seed_targets.json` defines:
+
+- **`poi_type_groups`** — named groups of Google place types to query (attractions, food, shopping, lodging, transport, etc.)
+- **`districts`** — all 12 Taipei districts, each with 3+ geographic seed points and radius settings
+
+Place results whose district does not match a known Taipei district are stored as raw payloads only and are not inserted into the normalized `places` table.
+
+### Output
+
+The script prints per-query stats and a final summary:
+
+```
+[中正區] seed=huashan group=food_drink mode=includedTypes type=restaurant google_returned=20 imported=18 skipped_non_taipei=2 failed=0
+[summary] districts=1 type_groups=6 queries=18 google_returned=200 imported=175 skipped_non_taipei=20 failed=5
+```
+
+Exit code is `0` on full success and `1` if any query fails.
+
+## Running Tests
+
+```bash
+python -m pytest tests/
+```
+
+The test suite covers:
+
+- `test_ingestion.py` — district normalization, Taipei filtering, and ingestion behavior using a fake DB session
+- `test_fetch_google_nearby.py` — config loading and district/type group structure validation
+
 ## Example Import JSON Payload
 
 The import endpoint expects a request body with this shape:
@@ -428,7 +491,6 @@ Current limitations based on the implemented code:
 - No versioned raw payload retention policy, pruning, or archival process
 - No advanced search, sorting, or full-text querying
 - No response pagination metadata beyond `limit` and `offset`
-- No automated test suite included in this repository yet
 
 ## Suggested Next Steps
 
