@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from datetime import datetime
@@ -40,6 +42,9 @@ class Place(Base):
     indoor: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     outdoor: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     budget_level: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    internal_category: Mapped[str] = mapped_column(
+        String(32), nullable=False, index=True, server_default="other"
+    )
     trend_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
     confidence_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
