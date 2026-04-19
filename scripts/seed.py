@@ -67,7 +67,7 @@ SAMPLE_GOOGLE_PAYLOAD = {
     "googleMapsUri": "https://maps.google.com/?cid=4342178518828401116",
     "websiteUri": "https://www.huashan1914.com/",
     "nationalPhoneNumber": "+886 2 2358 1914",
-    "currentOpeningHours": {
+    "regularOpeningHours": {
         "openNow": True,
         "weekdayDescriptions": [
             "星期一: 09:30 – 21:00",
@@ -77,6 +77,12 @@ SAMPLE_GOOGLE_PAYLOAD = {
             "星期五: 09:30 – 21:00",
             "星期六: 09:30 – 21:00",
             "星期日: 09:30 – 21:00",
+        ],
+        "periods": [
+            {
+                "open": {"day": 0, "hour": 9, "minute": 30},
+                "close": {"day": 0, "hour": 21, "minute": 0},
+            }
         ],
     },
 }

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.place import Place
 from app.models.place_features import PlaceFeatures
 from app.models.place_source_google import PlaceSourceGoogle
+from app.services.category import map_category
 
 TAIPEI_DISTRICT_TYPE_PRIORITY = [
     "administrative_area_level_2",
@@ -146,7 +147,8 @@ def ingest_google_place(
         "google_maps_uri": payload.get("googleMapsUri"),
         "website_uri": payload.get("websiteUri"),
         "national_phone_number": payload.get("nationalPhoneNumber"),
-        "opening_hours_json": payload.get("currentOpeningHours"),
+        "opening_hours_json": payload.get("regularOpeningHours"),
+        "internal_category": map_category(payload.get("primaryType"), payload.get("types")),
         "last_synced_at": datetime.now(timezone.utc),
     }
 

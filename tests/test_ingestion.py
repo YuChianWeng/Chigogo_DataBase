@@ -107,6 +107,7 @@ class IngestGooglePlaceTests(unittest.TestCase):
         self.assertEqual(result["action"], "created")
         self.assertEqual(len(session.places), 1)
         self.assertEqual(session.places[0].district, "中正區")
+        self.assertEqual(session.places[0].internal_category, "attraction")
         self.assertEqual(len(session.raw_records), 1)
         self.assertEqual(session.raw_records[0].place_id, session.places[0].id)
 
@@ -152,6 +153,8 @@ class IngestGooglePlaceTests(unittest.TestCase):
         first_payload = _payload_for_district("place-repeat", "Da’an District")
         second_payload = _payload_for_district("place-repeat", "Daan District")
         second_payload["displayName"] = {"text": "Updated Test Place"}
+        second_payload["primaryType"] = None
+        second_payload["types"] = ["shopping_mall", "point_of_interest"]
 
         first_result = ingest_google_place(session, first_payload)
         second_result = ingest_google_place(session, second_payload)
@@ -161,7 +164,33 @@ class IngestGooglePlaceTests(unittest.TestCase):
         self.assertEqual(len(session.places), 1)
         self.assertEqual(session.places[0].district, "大安區")
         self.assertEqual(session.places[0].display_name, "Updated Test Place")
+        self.assertEqual(session.places[0].internal_category, "shopping")
         self.assertEqual(len(session.raw_records), 2)
+
+    def test_ingest_uses_other_when_type_mapping_is_unknown(self):
+        session = FakeSession()
+        payload = _payload_for_district("place-other", "Zhongzheng District")
+        payload["primaryType"] = "unknown_type"
+        payload["types"] = ["still_unknown"]
+
+        result = ingest_google_place(session, payload)
+
+        self.assertEqual(result["action"], "created")
+        self.assertEqual(session.places[0].internal_category, "other")
+
+    def test_ingest_uses_regular_opening_hours(self):
+        session = FakeSession()
+        payload = _payload_for_district("place-hours", "Zhongzheng District")
+        payload["regularOpeningHours"] = {"periods": [{"open": {"day": 1, "hour": 9}}]}
+        payload["currentOpeningHours"] = {"periods": [{"open": {"day": 2, "hour": 10}}]}
+
+        result = ingest_google_place(session, payload)
+
+        self.assertEqual(result["action"], "created")
+        self.assertEqual(
+            session.places[0].opening_hours_json,
+            payload["regularOpeningHours"],
+        )
 
 
 if __name__ == "__main__":
