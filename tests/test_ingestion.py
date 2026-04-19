@@ -178,6 +178,20 @@ class IngestGooglePlaceTests(unittest.TestCase):
         self.assertEqual(result["action"], "created")
         self.assertEqual(session.places[0].internal_category, "other")
 
+    def test_ingest_uses_regular_opening_hours(self):
+        session = FakeSession()
+        payload = _payload_for_district("place-hours", "Zhongzheng District")
+        payload["regularOpeningHours"] = {"periods": [{"open": {"day": 1, "hour": 9}}]}
+        payload["currentOpeningHours"] = {"periods": [{"open": {"day": 2, "hour": 10}}]}
+
+        result = ingest_google_place(session, payload)
+
+        self.assertEqual(result["action"], "created")
+        self.assertEqual(
+            session.places[0].opening_hours_json,
+            payload["regularOpeningHours"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

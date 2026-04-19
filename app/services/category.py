@@ -13,6 +13,26 @@ INTERNAL_CATEGORIES = (
     "other",
 )
 
+CATEGORY_LABELS: dict[str, str] = {
+    "attraction": "Attraction",
+    "food": "Food & Drink",
+    "shopping": "Shopping",
+    "lodging": "Lodging",
+    "transport": "Transport",
+    "nightlife": "Nightlife",
+    "other": "Other",
+}
+
+REPRESENTATIVE_TYPES: dict[str, list[str]] = {
+    "attraction": ["tourist_attraction", "museum", "park", "art_gallery"],
+    "food": ["restaurant", "cafe", "bakery", "dessert_shop"],
+    "shopping": ["shopping_mall", "market", "store"],
+    "lodging": ["hotel", "hostel", "inn"],
+    "transport": ["subway_station", "train_station", "bus_station", "parking"],
+    "nightlife": ["bar", "pub", "night_club"],
+    "other": [],
+}
+
 CATEGORY_MAP: dict[str, str] = {
     # transport
     "subway_station": "transport",
@@ -130,3 +150,14 @@ def budget_rank(budget_level: str | None) -> int | None:
     if budget_level is None:
         return None
     return BUDGET_RANK.get(budget_level)
+
+
+def get_category_metadata() -> list[dict[str, object]]:
+    return [
+        {
+            "value": category,
+            "label": CATEGORY_LABELS[category],
+            "representative_types": list(REPRESENTATIVE_TYPES[category]),
+        }
+        for category in INTERNAL_CATEGORIES
+    ]

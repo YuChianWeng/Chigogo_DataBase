@@ -200,6 +200,9 @@ lng_delta = radius_m / (111_320 * cos(radians(lat)))
 
 The `opening_hours_json` column stores a Google Places `regularOpeningHours` object.
 
+`opening_hours_json` uses `regularOpeningHours` as the primary source for `open_now` evaluation.
+`currentOpeningHours` is not used in Phase 1.
+
 ```json
 {
   "periods": [

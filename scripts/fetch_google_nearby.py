@@ -25,7 +25,7 @@ FIELD_MASK = ",".join(
         "places.googleMapsUri",
         "places.websiteUri",
         "places.nationalPhoneNumber",
-        "places.currentOpeningHours",
+        "places.regularOpeningHours",
     ]
 )
 
